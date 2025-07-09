@@ -28,7 +28,7 @@ import {
   Clock4,
   Check
 } from "lucide-react";
-import { mockAppointments, mockCustomers, mockServices as initialMockServices } from "@/data/mockData";
+import { mockCustomers, mockServices as initialMockServices } from "@/data/mockData";
 import { useStaff } from "@/contexts/StaffContext";
 import { useAppointments } from "@/contexts/AppointmentsContext";
 

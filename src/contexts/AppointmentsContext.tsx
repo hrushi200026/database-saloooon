@@ -1,5 +1,18 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
-import { Appointment } from '@/data/mockData';
+import { appointmentDb, initDatabase } from '@/lib/database';
+import { useEffect } from 'react';
+
+export interface Appointment {
+  id: string;
+  customerId: string;
+  employeeId: string;
+  serviceIds: string[];
+  date: string;
+  time: string;
+  status: 'scheduled' | 'completed' | 'cancelled';
+  total: number;
+  notes: string;
+}
 
 interface AppointmentsContextType {
   appointments: Appointment[];
@@ -15,16 +28,38 @@ export function AppointmentsProvider({ children }: { children: ReactNode }) {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
 
+  // Load appointments from database
+  useEffect(() => {
+    try {
+      initDatabase();
+      const dbAppointments = appointmentDb.getAll();
+      setAppointments(dbAppointments);
+    } catch (error) {
+      console.error('Error loading appointments from database:', error);
+    }
+  }, []);
   const addAppointment = (newAppointment: Appointment) => {
-    setAppointments(prev => [...prev, newAppointment]);
+    try {
+      appointmentDb.create(newAppointment);
+      setAppointments(prev => [...prev, newAppointment]);
+    } catch (error) {
+      console.error('Error adding appointment to database:', error);
+      throw error;
+    }
   };
 
   const updateAppointment = (id: string, updates: Partial<Appointment>) => {
-    setAppointments(prev => 
-      prev.map(appt => 
-        appt.id === id ? { ...appt, ...updates } : appt
-      )
-    );
+    try {
+      appointmentDb.update(id, updates);
+      setAppointments(prev => 
+        prev.map(appt => 
+          appt.id === id ? { ...appt, ...updates } : appt
+        )
+      );
+    } catch (error) {
+      console.error('Error updating appointment in database:', error);
+      throw error;
+    }
   };
 
   return (

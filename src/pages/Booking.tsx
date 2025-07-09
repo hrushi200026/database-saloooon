@@ -12,6 +12,7 @@ import { format } from 'date-fns';
 import { mockEmployees, mockServices } from "@/data/mockData";
 import { StaffAndTimeSelector } from "@/components/StaffAndTimeSelector";
 import { useAppointments } from "@/contexts/AppointmentsContext";
+import type { Appointment } from "@/contexts/AppointmentsContext";
 import { useCustomers } from "@/contexts/CustomersContext";
 import { AddCustomerButton } from "@/components/AddCustomerButton";
 

@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { mockEmployees as initialMockEmployees } from '@/data/mockData';
+import { employeeDb, initDatabase } from '@/lib/database';
 
 export interface Employee {
   id: string;
@@ -28,29 +28,17 @@ const StaffContext = createContext<StaffContextType | undefined>(undefined);
 
 export function StaffProvider({ children }: { children: ReactNode }) {
   const [employees, setEmployees] = useState<Employee[]>([]);
-  const [isInitialized, setIsInitialized] = useState(false);
   
-  // Initialize with mock data on first load
+  // Initialize database and load employees
   useEffect(() => {
-    if (!isInitialized && employees.length === 0) {
-      console.log('Initializing staff data...');
-      const formattedEmployees = initialMockEmployees.map(emp => ({
-        id: emp.id,
-        name: emp.name,
-        role: emp.role,
-        photo: emp.photo,
-        available: emp.available,
-        specialties: emp.specialties || [],
-        rating: emp.rating || 0,
-        nextAvailable: emp.nextAvailable || '',
-        workingHours: emp.workingHours || { start: '09:00', end: '18:00' }
-      }));
-      
-      console.log('Setting employees:', formattedEmployees);
-      setEmployees(formattedEmployees);
-      setIsInitialized(true);
+    try {
+      initDatabase();
+      const dbEmployees = employeeDb.getAll();
+      setEmployees(dbEmployees);
+    } catch (error) {
+      console.error('Error loading employees from database:', error);
     }
-  }, [isInitialized, employees.length]);
+  }, []);
   
   const availableStaffCount = employees.filter(emp => emp.available).length;
   
@@ -60,23 +48,37 @@ export function StaffProvider({ children }: { children: ReactNode }) {
   }, [availableStaffCount, employees.length]);
 
   const updateEmployee = (id: string, updates: Partial<Employee>) => {
-    setEmployees(prev => 
-      prev.map(emp => 
-        emp.id === id ? { ...emp, ...updates } : emp
-      )
-    );
+    try {
+      employeeDb.update(id, updates);
+      setEmployees(prev => 
+        prev.map(emp => 
+          emp.id === id ? { ...emp, ...updates } : emp
+        )
+      );
+    } catch (error) {
+      console.error('Error updating employee in database:', error);
+      throw error;
+    }
   };
 
   const removeEmployee = (id: string) => {
-    setEmployees(prev => prev.filter(emp => emp.id !== id));
+    try {
+      employeeDb.delete(id);
+      setEmployees(prev => prev.filter(emp => emp.id !== id));
+    } catch (error) {
+      console.error('Error deleting employee from database:', error);
+      throw error;
+    }
   };
 
   const addEmployee = (employee: Omit<Employee, 'id'>) => {
-    const newEmployee = {
-      ...employee,
-      id: `emp-${Date.now()}`,
-    };
-    setEmployees(prev => [...prev, newEmployee]);
+    try {
+      const newEmployee = employeeDb.create(employee);
+      setEmployees(prev => [...prev, newEmployee]);
+    } catch (error) {
+      console.error('Error adding employee to database:', error);
+      throw error;
+    }
     return newEmployee;
   };
 
